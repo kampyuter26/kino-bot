@@ -1,3 +1,4 @@
+```python
 import json
 import os
 
@@ -23,7 +24,7 @@ TOKEN = os.environ["BOT_TOKEN"]
 # ADMIN ID
 # =========================
 
-ADMIN_ID =6522573426 
+ADMIN_ID = 6522573426
 
 
 # =========================
@@ -182,7 +183,6 @@ async def add_movie(
 
         return
 
-
     # Kod yozilmagan bo'lsa
     if not context.args:
 
@@ -196,12 +196,10 @@ async def add_movie(
 
         return
 
-
     code = context.args[0]
 
     # Keyingi yuboriladigan videoga kodni bog'laymiz
     context.user_data["add_movie_code"] = code
-
 
     await update.message.reply_text(
 
@@ -212,32 +210,37 @@ async def add_movie(
 
 
 # =========================
-# VIDEONI SAQLASH
+# KINO O'CHIRISH
 # =========================
 
-async def save_movie(
+async def delete_movie(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
 ):
 
-    # Faqat admin
+    # Faqat admin ishlata oladi
     if update.effective_user.id != ADMIN_ID:
+
+        await update.message.reply_text(
+            "❌ Siz admin emassiz."
+        )
+
         return
 
+    # Kod yozilmagan bo'lsa
+    if not context.args:
 
-    # Oldindan kino kodi berilganmi?
-    code = context.user_data.get("add_movie_code")
+        await update.message.reply_text(
 
-    if not code:
+            "❗ O'chiriladigan kino kodini yozing.\n\n"
+            "Masalan:\n"
+            "/delete 125"
+
+        )
+
         return
 
-
-    # Video olish
-    video = update.message.video
-
-    if not video:
-        return
-
+    code = context.args[0]
 
     # movies.json ni ochamiz
     try:
@@ -257,10 +260,87 @@ async def save_movie(
 
         movies = {}
 
+    # Kino mavjudligini tekshiramiz
+    if code not in movies:
+
+        await update.message.reply_text(
+
+            f"❌ {code} kodli kino topilmadi."
+
+        )
+
+        return
+
+    # Kinoni o'chiramiz
+    del movies[code]
+
+    # movies.json ga qayta yozamiz
+    with open(
+        "movies.json",
+        "w",
+        encoding="utf-8"
+    ) as f:
+
+        json.dump(
+            movies,
+            f,
+            ensure_ascii=False,
+            indent=4
+        )
+
+    await update.message.reply_text(
+
+        f"🗑 Kino o'chirildi!\n\n"
+        f"🎬 Kino kodi: {code}"
+
+    )
+
+
+# =========================
+# VIDEONI SAQLASH
+# =========================
+
+async def save_movie(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    # Faqat admin
+    if update.effective_user.id != ADMIN_ID:
+        return
+
+    # Oldindan kino kodi berilganmi?
+    code = context.user_data.get("add_movie_code")
+
+    if not code:
+        return
+
+    # Video olish
+    video = update.message.video
+
+    if not video:
+        return
+
+    # movies.json ni ochamiz
+    try:
+
+        with open(
+            "movies.json",
+            "r",
+            encoding="utf-8"
+        ) as f:
+
+            movies = json.load(f)
+
+    except (
+        FileNotFoundError,
+        json.JSONDecodeError
+    ):
+
+        movies = {}
 
     # Video file_id sini saqlaymiz
     movies[code] = video.file_id
-
 
     # movies.json ga yozamiz
     with open(
@@ -276,13 +356,11 @@ async def save_movie(
             indent=4
         )
 
-
     # Kodni tozalaymiz
     context.user_data.pop(
         "add_movie_code",
         None
     )
-
 
     await update.message.reply_text(
 
@@ -339,7 +417,6 @@ async def kino_kodi(
 
         ]
 
-
         await update.message.reply_text(
 
             "❌ Kino olish uchun avval "
@@ -353,10 +430,8 @@ async def kino_kodi(
 
         return
 
-
     # Foydalanuvchi yuborgan kod
     code = update.message.text.strip()
-
 
     # movies.json ni ochamiz
     try:
@@ -376,7 +451,6 @@ async def kino_kodi(
 
         movies = {}
 
-
     # Kino topilmasa
     if code not in movies:
 
@@ -388,7 +462,6 @@ async def kino_kodi(
         )
 
         return
-
 
     # Kino yuboriladi
     await update.message.reply_video(
@@ -425,6 +498,12 @@ app.add_handler(
 )
 
 
+# /delete
+app.add_handler(
+    CommandHandler("delete", delete_movie)
+)
+
+
 # Tekshirish tugmasi
 app.add_handler(
     CallbackQueryHandler(
@@ -458,3 +537,4 @@ print("Bot ishga tushdi...")
 
 # Botni ishga tushirish
 app.run_polling()
+```
