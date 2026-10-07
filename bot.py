@@ -1,4 +1,3 @@
-```python
 import json
 import os
 
@@ -537,4 +536,3 @@ print("Bot ishga tushdi...")
 
 # Botni ishga tushirish
 app.run_polling()
-```
